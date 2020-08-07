@@ -66,10 +66,10 @@ flags.DEFINE_integer(
 
 def write_to_tf_record(writer, tokenizer, query, docs, labels,
                        ids_file=None, query_id=None, doc_ids=None):
-  query = tokenization.convert_to_unicode(query)
+  query = tokenization.convert_to_unicode(query) #Assigns a special character to each letter in the query, since Python only reads letters in unicode
   query_token_ids = tokenization.convert_to_bert_input(
       text=query, max_seq_length=FLAGS.max_query_length, tokenizer=tokenizer, 
-      add_cls=True)
+      add_cls=True) #adds the [CLS] and [SEP] tokens to the sequence and replaces each token with its ID from BERTs vocabularly. Text should be in unicode format
 
   query_token_ids_tf = tf.train.Feature(
       int64_list=tf.train.Int64List(value=query_token_ids))
@@ -173,8 +173,8 @@ def convert_train_dataset(tokenizer):
   start_time = time.time()
 
   print('Counting number of examples...')
-  num_lines = sum(1 for line in open(FLAGS.train_dataset_path, 'r'))
-  print('{} examples found.'.format(num_lines))
+  num_lines = sum(1 for line in open(FLAGS.train_dataset_path, 'r')) #opens the file for reading
+  print('{} examples found.'.format(num_lines)) 
   writer = tf.python_io.TFRecordWriter(
       FLAGS.output_folder + '/dataset_train.tf')
 
@@ -188,7 +188,7 @@ def convert_train_dataset(tokenizer):
         print('Estimated hours remaining to write the training set: {}'.format(
             hours_remaining))
 
-      query, positive_doc, negative_doc = line.rstrip().split('\t')
+      query, positive_doc, negative_doc = line.rstrip().split('\t') #rstrip() eliminates any white spaces and split('t) splits the line into a list using 't' as a delimiter
 
       write_to_tf_record(writer=writer,
                          tokenizer=tokenizer,
