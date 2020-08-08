@@ -72,29 +72,29 @@ def write_to_tf_record(writer, tokenizer, query, docs, labels,
       add_cls=True) #adds the [CLS] and [SEP] tokens to the sequence and replaces each token with its ID from BERTs vocabularly. Text should be in unicode format
 
   query_token_ids_tf = tf.train.Feature(
-      int64_list=tf.train.Int64List(value=query_token_ids))
+      int64_list=tf.train.Int64List(value=query_token_ids)) #converts the query to a tensor
 
-  for i, (doc_text, label) in enumerate(zip(docs, labels)):
+  for i, (doc_text, label) in enumerate(zip(docs, labels)): #docs and label are lists. Docs consists of a postive and negative document and lists consists of a 1 and 0 
 
     doc_token_id = tokenization.convert_to_bert_input(
           text=tokenization.convert_to_unicode(doc_text),
           max_seq_length=FLAGS.max_seq_length - len(query_token_ids),
           tokenizer=tokenizer,
-          add_cls=False)
+          add_cls=False) #converts the document to unicode, then adds the [CLS] and [SEP] tokens and finally replaces each token with its token ID from BERTs vocabularly
 
     doc_ids_tf = tf.train.Feature(
-        int64_list=tf.train.Int64List(value=doc_token_id))
+        int64_list=tf.train.Int64List(value=doc_token_id)) #converts the query to a tensor
 
     labels_tf = tf.train.Feature(
-        int64_list=tf.train.Int64List(value=[label]))
+        int64_list=tf.train.Int64List(value=[label])) #converts the query to a tensor
 
-    features = tf.train.Features(feature={
+    features = tf.train.Features(feature={ #Features contains a dictionary that maps each feature name to its feature alue 
         'query_ids': query_token_ids_tf,
         'doc_ids': doc_ids_tf,
-        'label': labels_tf,
+        'label': labels_tf, #Each instance in the dataset contains 3 features: query_ids, doc_ids and label 
     })
-    example = tf.train.Example(features=features)
-    writer.write(example.SerializeToString())
+    example = tf.train.Example(features=features)#an example is a single instance from a dataset. Each example contains a single features
+    writer.write(example.SerializeToString()) #SerializeToString converts the dataset instance to a binary format which can be saved and transmitted over a network
 
     if ids_file:
      ids_file.write('\t'.join([query_id, doc_ids[i]]) + '\n')
@@ -104,25 +104,25 @@ def convert_eval_dataset(set_name, tokenizer):
   start_time = time.time()
 
   if set_name == 'dev':
-    dataset_path = FLAGS.dev_dataset_path
-    relevant_pairs = set()
-    with open(FLAGS.dev_qrels_path) as f:
+    dataset_path = FLAGS.dev_dataset_path #FLAGS allows for a variable to be changed from the runtime environment 
+    relevant_pairs = set() #creates a tuple
+    with open(FLAGS.dev_qrels_path) as f: #qrels is a file which contrains the ground truth documents for each passage
       for line in f:
         query_id, _, doc_id, _ = line.strip().split('\t')
-        relevant_pairs.add('\t'.join([query_id, doc_id]))
+        relevant_pairs.add('\t'.join([query_id, doc_id])) #joins query_id and doc_id into a single string with 't' as the seperator
   else:
     dataset_path = FLAGS.eval_dataset_path
 
   queries_docs = collections.defaultdict(list)  
-  query_ids = {}
+  query_ids = {} #creates a dictionary
   with open(dataset_path, 'r') as f:
     for i, line in enumerate(f):
-      query_id, doc_id, query, doc = line.strip().split('\t')
+      query_id, doc_id, query, doc = line.strip().split('\t') #assigns the result of the split to each variable
       label = 0
       if set_name == 'dev':
         if '\t'.join([query_id, doc_id]) in relevant_pairs:
           label = 1
-      queries_docs[query].append((doc_id, doc, label))
+      queries_docs[query].append((doc_id, doc, label)) #a new query key will be created since it does not exist in the queries_docs dictionary
       query_ids[query] = query_id
 
   # Add fake paragraphs to the queries that have less than FLAGS.num_eval_docs.
@@ -188,7 +188,7 @@ def convert_train_dataset(tokenizer):
         print('Estimated hours remaining to write the training set: {}'.format(
             hours_remaining))
 
-      query, positive_doc, negative_doc = line.rstrip().split('\t') #rstrip() eliminates any white spaces and split('t) splits the line into a list using 't' as a delimiter
+      query, positive_doc, negative_doc = line.rstrip().split('\t') #rstrip() eliminates any white spaces and split('t') splits the line into a list using 't' as a delimiter
 
       write_to_tf_record(writer=writer,
                          tokenizer=tokenizer,
