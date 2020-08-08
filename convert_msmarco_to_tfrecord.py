@@ -122,16 +122,16 @@ def convert_eval_dataset(set_name, tokenizer):
       if set_name == 'dev':
         if '\t'.join([query_id, doc_id]) in relevant_pairs:
           label = 1
-      queries_docs[query].append((doc_id, doc, label)) #a new query key will be created since it does not exist in the queries_docs dictionary
+      queries_docs[query].append((doc_id, doc, label)) #each query will represent a new key in the dictionary. This means that each query is associated with many documents 
       query_ids[query] = query_id
 
   # Add fake paragraphs to the queries that have less than FLAGS.num_eval_docs.
-  queries = list(queries_docs.keys())  # Need to copy keys before iterating.
+  queries = list(queries_docs.keys())  # Need to copy keys before iterating. This creates a list of all the quries from the dev or eval dataset
   for query in queries:
-    docs = queries_docs[query]
+    docs = queries_docs[query] #creates a list of all the documents associated with a query
     docs += max(
-        0, FLAGS.num_eval_docs - len(docs)) * [('00000000', 'FAKE DOCUMENT', 0)]
-    queries_docs[query] = docs
+        0, FLAGS.num_eval_docs - len(docs)) * [('00000000', 'FAKE DOCUMENT', 0)] #max() returns the item with the highest value. The fake documents may be added to the docs list
+    queries_docs[query] = docs #sets the documents associated with a query to the doc list
 
   assert len(
       set(len(docs) == FLAGS.num_eval_docs for docs in queries_docs.values())) == 1, (
