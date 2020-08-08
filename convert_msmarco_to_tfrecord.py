@@ -143,7 +143,7 @@ def convert_eval_dataset(set_name, tokenizer):
   query_doc_ids_path = (
       FLAGS.output_folder + '/query_doc_ids_' + set_name + '.txt')
   with open(query_doc_ids_path, 'w') as ids_file:
-    for i, (query, doc_ids_docs) in enumerate(queries_docs.items()):
+    for i, (query, doc_ids_docs) in enumerate(queries_docs.items()): #.items returns a list of the key and its associated values. e.g. Q1: first query, second query, Q2:..
       doc_ids, docs, labels = zip(*doc_ids_docs)
       query_id = query_ids[query]
 
