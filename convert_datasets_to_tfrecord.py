@@ -105,33 +105,34 @@ def convert_eval_dataset(set_name, tokenizer):
 
   if set_name == 'dev':
     dataset_path = FLAGS.dev_dataset_path #FLAGS allows for a variable to be changed from the runtime environment 
-    relevant_pairs = set() #creates a tuple
+    relevant_pairs = set() #a set is a collection of elements
     with open(FLAGS.dev_qrels_path) as f: #qrels is a file which contrains the ground truth documents for each passage
       for line in f:
-        query_id, _, doc_id, _ = line.strip().split('\t')
-        relevant_pairs.add('\t'.join([query_id, doc_id])) #joins query_id and doc_id into a single string with 't' as the seperator
+        query_id, _, doc_id, _ = line.strip().split('\t') #underscore represents a throw-away variable
+        relevant_pairs.add('\t'.join([query_id, doc_id])) #joins query_id and doc_id into a single string with a space between them. The string is then added to the set
   else:
     dataset_path = FLAGS.eval_dataset_path
 
+  #executes the below code for both the development and evaluation sets
   queries_docs = collections.defaultdict(list)  
-  query_ids = {} #creates a dictionary
+  query_ids = {} #creates a dictionary. [] = list, () = tuple, {} = dictionary or set
   with open(dataset_path, 'r') as f:
     for i, line in enumerate(f):
       query_id, doc_id, query, doc = line.strip().split('\t') #assigns the result of the split to each variable
-      label = 0
+      label = 0 #no labels are needed for the evaluation set
       if set_name == 'dev':
         if '\t'.join([query_id, doc_id]) in relevant_pairs:
           label = 1
-      queries_docs[query].append((doc_id, doc, label)) #each query will represent a new key in the dictionary. This means that each query is associated with many documents 
-      query_ids[query] = query_id
+      queries_docs[query].append((doc_id, doc, label)) #each query will represent a new key in the dictionary. This means that each query is associated with a doc_id, doc and label 
+      query_ids[query] = query_id #query_id is assigned to the query key in the query_ids dictionary
 
   # Add fake paragraphs to the queries that have less than FLAGS.num_eval_docs.
   queries = list(queries_docs.keys())  # Need to copy keys before iterating. This creates a list of all the quries from the dev or eval dataset
   for query in queries:
-    docs = queries_docs[query] #creates a list of all the documents associated with a query
+    docs = queries_docs[query] #assigns the values associated with the query key to docs (doc-id, doc, label)
     docs += max(
-        0, FLAGS.num_eval_docs - len(docs)) * [('00000000', 'FAKE DOCUMENT', 0)] #max() returns the item with the highest value. The fake documents may be added to the docs list
-    queries_docs[query] = docs #sets the documents associated with a query to the doc list
+        0, FLAGS.num_eval_docs - len(docs)) * [('00000000', 'FAKE DOCUMENT', 0)] #max() returns the item with the highest value. The number of fake documents added to the docs list is determined by subtracting number of documents from the required number of documents 
+    queries_docs[query] = docs #sets docs as the new value for the query key
 
   assert len(
       set(len(docs) == FLAGS.num_eval_docs for docs in queries_docs.values())) == 1, (
@@ -142,12 +143,12 @@ def convert_eval_dataset(set_name, tokenizer):
 
   query_doc_ids_path = (
       FLAGS.output_folder + '/query_doc_ids_' + set_name + '.txt')
-  with open(query_doc_ids_path, 'w') as ids_file:
-    for i, (query, doc_ids_docs) in enumerate(queries_docs.items()): #.items returns a list of the key and its associated values. e.g. Q1: first query, second query, Q2:..
-      doc_ids, docs, labels = zip(*doc_ids_docs)
+  with open(query_doc_ids_path, 'w') as ids_file: #-w writes information to the query_doc_ids_path file
+    for i, (query, doc_ids_docs) in enumerate(queries_docs.items()): #.items returns a list of the key and its associated values. query = query and doc_ids_docs = (doc_id, doc, label)
+      doc_ids, docs, labels = zip(*doc_ids_docs) #zip(*doc_ids_docs) = doc_id, doc, label
       query_id = query_ids[query]
 
-      write_to_tf_record(writer=writer,
+      write_to_tf_record(writer=writer, #the writer is set to the output file path
                          tokenizer=tokenizer,
                          query=query, 
                          docs=docs, 
@@ -176,7 +177,7 @@ def convert_train_dataset(tokenizer):
   num_lines = sum(1 for line in open(FLAGS.train_dataset_path, 'r')) #opens the file for reading
   print('{} examples found.'.format(num_lines)) 
   writer = tf.python_io.TFRecordWriter(
-      FLAGS.output_folder + '/dataset_train.tf')
+      FLAGS.output_folder + '/dataset_train.tf') #specifies the output file path where the results will be written
 
   with open(FLAGS.train_dataset_path, 'r') as f:
     for i, line in enumerate(f):
@@ -190,7 +191,7 @@ def convert_train_dataset(tokenizer):
 
       query, positive_doc, negative_doc = line.rstrip().split('\t') #rstrip() eliminates any white spaces and split('t') splits the line into a list using 't' as a delimiter
 
-      write_to_tf_record(writer=writer,
+      write_to_tf_record(writer=writer, #the writer is set to the output file path
                          tokenizer=tokenizer,
                          query=query, 
                          docs=[positive_doc, negative_doc], 
